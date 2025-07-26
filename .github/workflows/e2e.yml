@@ -41,6 +41,8 @@ jobs:
 
       - name: NPM install
         run: npm install
+        env:                     # ← new block (2-space indent)
+          PIC_DOWNLOAD_SKIP: "true"
 
       - name: Setup dfx
         uses: dfinity/setup-dfx@main
