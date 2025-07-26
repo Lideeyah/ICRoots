@@ -64,7 +64,7 @@ icroots/
 
 ## 5. Quick Start (local)
 
-1. **Pre-requisites**
+1. *Pre-requisites*
 
    ```
    node ≥18   dfx ≥0.20   git ≥2.40
@@ -72,16 +72,16 @@ icroots/
 
 ````
 
-2. **Clone & prepare**
+2. Clone & prepare
 
-   ```
    git clone https://github.com/ICRoots/ICRoots.git
    cd ICRoots
    cp .env.sample .env         # adjust NETWORK / cycles wallet if needed
-   npm install                 # installs both root and workspace deps
-   ```
+   npm install               # installs both root and workspace deps
 
-3. **Run ICP locally + frontend**
+````
+
+3. *Run ICP locally + frontend*
 
    ```
    dfx start --background
@@ -134,17 +134,3 @@ MIT © 2025 ICRoots team.
 *Let’s build a fairer, faster Bitcoin credit market – together.* 🚀
 
 ````
-
----
-
-### Git commands to commit the update
-
-# make sure you are at repo root
-
-git checkout -b docs/update-readme # or stay on current branch
-nano README.md # paste the content above, save
-git add README.md
-git commit -m "docs: overhaul README with architecture, dev guide"
-git push -u origin docs/update-readme # create PR or merge directly
-
-> If you’re already on `backend/bootstrap` and want the change there, skip the branch-creation line and just commit to that branch.
