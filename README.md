@@ -11,21 +11,21 @@ Millions of Bitcoin holders sit on locked value but lack fast, non-custodial acc
 Traditional “crypto loans” are either centralized or ignore borrower reputation.  
 **ICRoots** blends three super-powers:
 
-1. **BTC-backed loans** – keep your coins, unlock short-term cash.  
-2. **Soul-bound NFT reputation** – gamified trust that grows with every repayment.  
+1. **BTC-backed loans** – keep your coins, unlock short-term cash.
+2. **Soul-bound NFT reputation** – gamified trust that grows with every repayment.
 3. **AI Copilot** – on-chain risk scoring & loan matchmaking.
 
 ---
 
 ## 2. System Architecture (micro-canisters)
 
-| Concern                         | Canister          | Why isolate it?                                        |
-|---------------------------------|-------------------|--------------------------------------------------------|
-| Loan ledger & core state        | `loans`           | Small, auditable upgrades.                             |
-| BTC custody & liquidation logic | `collateral`      | Tight security boundary; almost never upgraded.        |
-| Reputation NFTs                 | `repute` *(TBD)*  | Separate lifecycle for mint/burn permissions.          |
-| AI scoring engine               | `trust_ai`*(TBD)* | WASM heavy; can be swapped for newer models later.     |
-| UX events / logs                | `event_bus`       | Keeps business logic clean; tiny footprint.            |
+| Concern                         | Canister          | Why isolate it?                                    |
+| ------------------------------- | ----------------- | -------------------------------------------------- |
+| Loan ledger & core state        | `loans`           | Small, auditable upgrades.                         |
+| BTC custody & liquidation logic | `collateral`      | Tight security boundary; almost never upgraded.    |
+| Reputation NFTs                 | `repute` _(TBD)_  | Separate lifecycle for mint/burn permissions.      |
+| AI scoring engine               | `trust_ai`_(TBD)_ | WASM heavy; can be swapped for newer models later. |
+| UX events / logs                | `event_bus`       | Keeps business logic clean; tiny footprint.        |
 
 📄 See **docs/micro-canister-architecture.png** for a visual and **docs/data-flow-sequence.png** for the happy-path sequence diagram.
 
@@ -33,33 +33,32 @@ Traditional “crypto loans” are either centralized or ignore borrower reputat
 
 ## 3. Tech Stack
 
-| Layer        | Choice                                  |
-|--------------|-----------------------------------------|
-| Frontend     | React + Vite + TailwindCSS              |
-| Blockchain   | Internet Computer (ICP) Canisters (Rust/Motoko) |
-| Wallet/Auth  | Plug Wallet • Internet Identity         |
-| AI Layer     | OpenAI / Caffeine AI                    |
-| NFTs         | Soul-bound DIP-721                      |
-| Dev tooling  | `dfx`, Vitest, Husky pre-commit hooks   |
+| Layer       | Choice                                          |
+| ----------- | ----------------------------------------------- |
+| Frontend    | React + Vite + TailwindCSS                      |
+| Blockchain  | Internet Computer (ICP) Canisters (Rust/Motoko) |
+| Wallet/Auth | Plug Wallet • Internet Identity                 |
+| AI Layer    | OpenAI / Caffeine AI                            |
+| NFTs        | Soul-bound DIP-721                              |
+| Dev tooling | `dfx`, Vitest, Husky pre-commit hooks           |
 
 ---
 
 ## 4. Folder Map (top level)
 
 icroots/
-├─ canisters/           # each micro-canister lives here
-│   ├─ loans/
-│   ├─ collateral/
-│   ├─ repute/
-│   ├─ trust\_ai/
-│   └─ event\_bus/
-├─ src/frontend/        # React app
-├─ docs/                # diagrams & pitch assets
-├─ tests/               # integration tests (ic-cdk-testing)
-├─ scripts/             # helper bash/ts scripts
-├─ dfx.json             # ICP workspace definition
-└─ README.md            # you are here
-
+├─ canisters/ # each micro-canister lives here
+│ ├─ loans/
+│ ├─ collateral/
+│ ├─ repute/
+│ ├─ trust_ai/
+│ └─ event_bus/
+├─ src/frontend/ # React app
+├─ docs/ # diagrams & pitch assets
+├─ tests/ # integration tests (ic-cdk-testing)
+├─ scripts/ # helper bash/ts scripts
+├─ dfx.json # ICP workspace definition
+└─ README.md # you are here
 
 ---
 
@@ -69,6 +68,8 @@ icroots/
 
    ```
    node ≥18   dfx ≥0.20   git ≥2.40
+   ```
+
 ````
 
 2. **Clone & prepare**
@@ -139,10 +140,11 @@ MIT © 2025 ICRoots team.
 ### Git commands to commit the update
 
 # make sure you are at repo root
-git checkout -b docs/update-readme      # or stay on current branch
-nano README.md                          # paste the content above, save
+
+git checkout -b docs/update-readme # or stay on current branch
+nano README.md # paste the content above, save
 git add README.md
 git commit -m "docs: overhaul README with architecture, dev guide"
-git push -u origin docs/update-readme   # create PR or merge directly
+git push -u origin docs/update-readme # create PR or merge directly
 
 > If you’re already on `backend/bootstrap` and want the change there, skip the branch-creation line and just commit to that branch.
