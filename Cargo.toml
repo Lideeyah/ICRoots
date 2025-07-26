@@ -1,0 +1,10 @@
+cat > Cargo.toml <<'EOF'
+[workspace]
+members = [
+  "src/backend/canisters/loans",
+  "src/backend/canisters/collateral",
+  "src/backend/canisters/repute",
+  "src/backend/canisters/trust_ai",
+  "src/backend/canisters/event_bus"
+]
+EOF
