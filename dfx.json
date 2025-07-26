@@ -25,6 +25,11 @@
       "wasm": "target/wasm32-unknown-unknown/release/trust_ai_backend.wasm",
       "build": "cargo build --target wasm32-unknown-unknown --release --manifest-path src/backend/canisters/trust_ai/Cargo.toml"
     },
+    "loans": {
+  "type": "motoko",
+  "main": "canisters/loans/src/main.mo",
+  "wasm_opt": ["-O3"]
+},
     "event_bus_backend": {
       "type": "custom",
       "candid": "src/backend/canisters/event_bus/event_bus_backend.did",
