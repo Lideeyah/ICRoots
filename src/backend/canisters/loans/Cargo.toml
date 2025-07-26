@@ -1,5 +1,14 @@
-[workspace]
-members = [
-    "src/icroots_loans_backend"
-]
-resolver = "2"
+[package]
+name = "loans_backend"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+ic-cdk = "0.18.5"
+ic-cdk-macros = "0.18.5"
+serde = { version = "1.0", features = ["derive"] }
+serde_bytes = "0.11"
+candid = "0.10"

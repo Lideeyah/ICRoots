@@ -1,6 +1,15 @@
 [package]
-name = "event_bus"
-version = "0.1.0"
-edition = "2024"
+name        = "event_bus_backend"
+description = "Event-bus service canister"
+version     = "0.1.0"
+edition     = "2021"
+license     = "Apache-2.0"
+
+[lib]
+crate-type = ["cdylib"]
 
 [dependencies]
+candid        = "0.10"
+ic-cdk        = "0.17"
+ic-cdk-macros = "0.17"
+serde         = { version = "1.0", features = ["derive"] }
