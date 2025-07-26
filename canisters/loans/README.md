@@ -1,1 +1,1 @@
-# Loans canister\nPurpose: store and manage loan state.
+# Loans canister – manages loan state.
