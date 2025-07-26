@@ -1,7 +1,4 @@
-Below is a **drop-in replacement** for your README.
-Copy everything between the two fences into `README.md`, commit, and push.
 
-````markdown
 # ICRoots 🌳🔗
 
 _Bitcoin lending, rooted in trust._
@@ -48,7 +45,7 @@ ICRoots fixes that with three super-powers:
 
 ## 4 Repo Map
 
-```text
+```
 ICRoots/
 ├─ src/backend/canisters/
 │  ├─ loans/          # Rust crate → loans_backend.wasm
@@ -64,42 +61,47 @@ ICRoots/
 ├─ dfx.json           # workspace definition
 └─ README.md          # (you are here)
 ```
-````
-
 ---
 
 ## 5 Local Dev Loop
-
-```bash
-# 1 — Prereqs
+### 1 — Prereqs
+```
 node >=18     dfx >=0.27     cargo >=1.77
+```
 
-# 2 — Clone & install deps
+### 2 — Clone & install deps
+```
 git clone https://github.com/ICRoots/ICRoots.git
 cd ICRoots
 cp .env.sample .env          # adjust NETWORK / wallet if needed
 npm install                  # installs front-end + husky hooks
+```
 
-# 3 — Run ICP locally + front-end
+### 3 — Run ICP locally + front-end
+```
 dfx start --background
 dfx deploy                   # builds + installs all canisters
+```
 
-# modern UI (Vite)
+### modern UI (Vite)
+```
 npm run --workspace src/frontend dev          # http://localhost:5173
+```
 
-# legacy Netlify UI (for reference)
+### legacy Netlify UI (for reference)
+```
 npm run --workspace legacy-frontend dev       # http://localhost:5180
 ```
 
 ### Back-end tests
 
-```bash
+```
 cargo test --manifest-path src/backend/canisters/loans/Cargo.toml
 ```
 
 ### Regenerate Candid (didc 0.4)
 
-```bash
+```
 cargo build --manifest-path src/backend/canisters/loans/Cargo.toml \
             --release --target wasm32-unknown-unknown
 
@@ -155,22 +157,3 @@ MIT © 2025 ICRoots team.
 ---
 
 _Let’s build a fairer, faster Bitcoin credit market – together._ 🚀
-
-````
-
----
-
-### Git steps
-
-```bash
-# 1 — update README.md with the content above
-git add README.md
-
-# 2 — commit
-git commit -m "docs: refresh README with workspace map, dev guide, Netlify link"
-
-# 3 — push (creates or updates your PR)
-git push
-````
-
-That’s it! Your repository landing page will now show the full project intro, architecture table, repo map, dev commands, and the Netlify link.
