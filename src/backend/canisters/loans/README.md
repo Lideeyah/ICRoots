@@ -1,3 +1,3 @@
 # Loans Canister
 
-*Placeholder*
+_Placeholder_

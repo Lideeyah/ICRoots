@@ -6,12 +6,8 @@
       "type": "rust"
     },
     "icroots_loans_frontend": {
-      "dependencies": [
-        "icroots_loans_backend"
-      ],
-      "source": [
-        "src/icroots_loans_frontend/dist"
-      ],
+      "dependencies": ["icroots_loans_backend"],
+      "source": ["src/icroots_loans_frontend/dist"],
       "type": "assets",
       "workspace": "icroots_loans_frontend"
     }

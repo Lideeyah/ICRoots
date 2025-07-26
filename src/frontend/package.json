@@ -7,6 +7,7 @@
   "scripts": {
     "start": "vite",
     "build": "dfx generate && tsc && vite build",
+    "dev": "vite",
     "test": "vitest run"
   },
   "dependencies": {

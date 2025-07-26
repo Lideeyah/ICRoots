@@ -1,3 +1,3 @@
 # TrustAI Canister
 
-*Placeholder*
+_Placeholder_

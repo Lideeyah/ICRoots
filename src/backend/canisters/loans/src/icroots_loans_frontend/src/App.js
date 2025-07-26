@@ -1,9 +1,9 @@
-import { html, render } from 'lit-html';
-import { icroots_loans_backend } from 'declarations/icroots_loans_backend';
-import logo from './logo2.svg';
+import { html, render } from "lit-html";
+import { icroots_loans_backend } from "declarations/icroots_loans_backend";
+import logo from "./logo2.svg";
 
 class App {
-  greeting = '';
+  greeting = "";
 
   constructor() {
     this.#render();
@@ -11,7 +11,7 @@ class App {
 
   #handleSubmit = async (e) => {
     e.preventDefault();
-    const name = document.getElementById('name').value;
+    const name = document.getElementById("name").value;
     this.greeting = await icroots_loans_backend.greet(name);
     this.#render();
   };
@@ -30,10 +30,10 @@ class App {
         <section id="greeting">${this.greeting}</section>
       </main>
     `;
-    render(body, document.getElementById('root'));
+    render(body, document.getElementById("root"));
     document
-      .querySelector('form')
-      .addEventListener('submit', this.#handleSubmit);
+      .querySelector("form")
+      .addEventListener("submit", this.#handleSubmit);
   }
 }
 

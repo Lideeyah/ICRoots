@@ -1,3 +1,3 @@
 # Collateral Canister
 
-*Placeholder*
+_Placeholder_
