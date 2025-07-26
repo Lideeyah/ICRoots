@@ -5,7 +5,8 @@
   "main": "index.js",
   "type": "module",
   "workspaces": [
-    "src/frontend"
+    "src/frontend",
+    "legacy-frontend"
   ],
   "scripts": {
     "generate-candid": "bash ./scripts/generate-candid.sh",
