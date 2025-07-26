@@ -1,0 +1,5 @@
+[workspace]
+members = [
+    "src/icroots_loans_backend"
+]
+resolver = "2"

@@ -1,0 +1,11 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Always run from repo root
+repo_root=$(git rev-parse --show-toplevel)
+cd "$repo_root"
+
+# Run only prettier for now (no Rust tools)
+prettier --write .
+
+
