@@ -1,9 +1,8 @@
-use ic_cdk::api::stable;
-use ic_cdk::{export::Principal, storage};
-use ic_cdk::stable::{stable64_read, stable64_write, stable64_size};
+use ic_cdk::stable::{stable_read, stable_write, stable_size};
 use candid::{CandidType, Deserialize, Principal};
 use std::cell::RefCell;
 use std::time::{SystemTime, UNIX_EPOCH};
+
 
 
 /* ---------- DATA TYPES ---------- */
@@ -58,7 +57,7 @@ fn request_loan(
 
     let loan = Loan {
         id,
-        borrower: ic_cdk::caller(),
+        borrower: ic_cdk::api::caller(),
         lender: None,
         btc_locked: btc_sats,
         amount_usdt: usdt_cents,
@@ -77,7 +76,7 @@ fn fund_loan(id: u64) {
         let mut loans = l.borrow_mut();
         let loan = loans.get_mut(id as usize).expect("loan not found");
         assert!(matches!(loan.status, LoanStatus::Requested));
-        loan.lender = Some(ic_cdk::caller());
+        loan.lender = Some(ic_cdk::api::caller());
         loan.status = LoanStatus::Funded;
     });
 }
@@ -87,7 +86,7 @@ fn mark_repaid(id: u64) {
     LOANS.with(|l| {
         let mut loans = l.borrow_mut();
         let loan = loans.get_mut(id as usize).expect("loan not found");
-        assert_eq!(loan.borrower, ic_cdk::caller());
+        assert_eq!(loan.borrower, ic_cdk::api::caller());
         loan.status = LoanStatus::Repaid;
     });
 }
@@ -102,18 +101,17 @@ fn get_loan(id: u64) -> Option<Loan> {
 fn pre_upgrade() {
     let vec = LOANS.with(|l| l.borrow().clone());
     let bytes = candid::encode_one(vec).unwrap();
-    stable64_write(0, &bytes);                 // offset must be first arg
+    stable_write(0, &bytes);                 // offset must be first arg
 }
 
 #[ic_cdk::post_upgrade]
 fn post_upgrade() {
-    let page_bytes = 65_536u64;               // 64 KiB per Wasm page
-    let total_bytes = stable64_size() * page_bytes;
+    let total_bytes = stable_size();
     if total_bytes == 0 {
         return;
     }
     let mut buf = vec![0u8; total_bytes as usize];
-    stable64_read(0, &mut buf);
+    stable_read(0, &mut buf);
     let vec: Vec<Loan> = candid::decode_one(&buf).unwrap();
     LOANS.with(|l| *l.borrow_mut() = vec);
     NEXT_ID.with(|n| *n.borrow_mut() = LOANS.with(|l| l.borrow().len() as u64));
