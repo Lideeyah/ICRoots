@@ -1,22 +1,29 @@
-import { v4 as uuidv4 } from 'uuid';
-import { icpService } from './icpService';
-import { aiService } from './aiService';
-import { walletService } from './walletService';
+import { v4 as uuidv4 } from "uuid";
+import { icpService } from "./icpService";
+import { aiService } from "./aiService";
+import { walletService } from "./walletService";
 
 export interface Loan {
   id: string;
   borrowerId: string;
   lenderId?: string;
   amount: number;
-  currency: 'USD' | 'USDT';
+  currency: "USD" | "USDT";
   collateralAmount: number;
   collateralAddress: string;
   interestRate: number;
   term: number; // months
   purpose: string;
-  status: 'pending' | 'approved' | 'funded' | 'active' | 'repaid' | 'defaulted' | 'rejected';
+  status:
+    | "pending"
+    | "approved"
+    | "funded"
+    | "active"
+    | "repaid"
+    | "defaulted"
+    | "rejected";
   aiScore: number;
-  riskLevel: 'low' | 'medium' | 'high';
+  riskLevel: "low" | "medium" | "high";
   createdAt: number;
   fundedAt?: number;
   dueDate?: number;
@@ -35,12 +42,12 @@ export interface Payment {
   principal: number;
   interest: number;
   date: number;
-  status: 'pending' | 'completed' | 'late' | 'failed';
+  status: "pending" | "completed" | "late" | "failed";
 }
 
 export interface LoanApplication {
   amount: number;
-  currency: 'USD' | 'USDT';
+  currency: "USD" | "USDT";
   purpose: string;
   idDocument: File;
   borrowerId: string;
@@ -50,18 +57,20 @@ class LoanService {
   private loans: Map<string, Loan> = new Map();
   private applications: Map<string, LoanApplication> = new Map();
 
-  async submitLoanApplication(application: LoanApplication): Promise<{ loanId: string; aiResult: any }> {
+  async submitLoanApplication(
+    application: LoanApplication,
+  ): Promise<{ loanId: string; aiResult: any }> {
     try {
       // Get borrower's wallet and trust info
       const wallet = await walletService.getWallet(application.borrowerId);
-      if (!wallet) throw new Error('Wallet not found');
+      if (!wallet) throw new Error("Wallet not found");
 
       // Calculate required collateral (150% ratio)
       const btcPrice = walletService.getBTCPrice();
       const requiredCollateral = (application.amount * 1.5) / btcPrice;
 
       if (wallet.balance < requiredCollateral) {
-        throw new Error('Insufficient collateral');
+        throw new Error("Insufficient collateral");
       }
 
       // Get AI assessment
@@ -70,9 +79,9 @@ class LoanService {
         currency: application.currency,
         purpose: application.purpose,
         collateralAmount: requiredCollateral,
-        trustTier: 'sapling', // This would come from user profile
+        trustTier: "sapling", // This would come from user profile
         previousLoans: 0, // This would come from user history
-        repaymentHistory: 100 // This would come from user history
+        repaymentHistory: 100, // This would come from user history
       });
 
       // Create loan record
@@ -84,10 +93,13 @@ class LoanService {
         currency: application.currency,
         collateralAmount: requiredCollateral,
         collateralAddress: wallet.address,
-        interestRate: this.calculateInterestRate(aiResult.score, aiResult.riskLevel),
+        interestRate: this.calculateInterestRate(
+          aiResult.score,
+          aiResult.riskLevel,
+        ),
         term: 12, // Default 12 months
         purpose: application.purpose,
-        status: aiResult.approved ? 'approved' : 'rejected',
+        status: aiResult.approved ? "approved" : "rejected",
         aiScore: aiResult.score,
         riskLevel: aiResult.riskLevel,
         createdAt: Date.now(),
@@ -95,14 +107,14 @@ class LoanService {
         totalPaid: 0,
         monthlyPayment: 0,
         documents: [],
-        repaymentHistory: []
+        repaymentHistory: [],
       };
 
       // Calculate monthly payment
       loan.monthlyPayment = this.calculateMonthlyPayment(
         loan.amount,
         loan.interestRate,
-        loan.term
+        loan.term,
       );
 
       if (aiResult.approved) {
@@ -110,7 +122,7 @@ class LoanService {
         await walletService.lockCollateral(
           application.borrowerId,
           requiredCollateral,
-          loanId
+          loanId,
         );
 
         // Create loan on ICP
@@ -121,7 +133,7 @@ class LoanService {
           collateralAddress: wallet.address,
           collateralAmount: requiredCollateral,
           purpose: application.purpose,
-          aiScore: aiResult.score
+          aiScore: aiResult.score,
         });
       }
 
@@ -130,14 +142,14 @@ class LoanService {
 
       return { loanId, aiResult };
     } catch (error) {
-      console.error('Failed to submit loan application:', error);
+      console.error("Failed to submit loan application:", error);
       throw error;
     }
   }
 
   private calculateInterestRate(aiScore: number, riskLevel: string): number {
     let baseRate = 8.0; // Base rate 8%
-    
+
     // Adjust based on AI score
     if (aiScore >= 90) baseRate -= 2.0;
     else if (aiScore >= 80) baseRate -= 1.5;
@@ -147,42 +159,56 @@ class LoanService {
 
     // Adjust based on risk level
     switch (riskLevel) {
-      case 'low': baseRate -= 0.5; break;
-      case 'high': baseRate += 1.5; break;
+      case "low":
+        baseRate -= 0.5;
+        break;
+      case "high":
+        baseRate += 1.5;
+        break;
     }
 
     return Math.max(5.0, Math.min(15.0, baseRate)); // Cap between 5% and 15%
   }
 
-  private calculateMonthlyPayment(principal: number, annualRate: number, termMonths: number): number {
+  private calculateMonthlyPayment(
+    principal: number,
+    annualRate: number,
+    termMonths: number,
+  ): number {
     const monthlyRate = annualRate / 100 / 12;
-    const payment = principal * (monthlyRate * Math.pow(1 + monthlyRate, termMonths)) / 
-                   (Math.pow(1 + monthlyRate, termMonths) - 1);
+    const payment =
+      (principal * (monthlyRate * Math.pow(1 + monthlyRate, termMonths))) /
+      (Math.pow(1 + monthlyRate, termMonths) - 1);
     return Math.round(payment * 100) / 100;
   }
 
-  async fundLoan(loanId: string, lenderId: string, amount: number): Promise<boolean> {
+  async fundLoan(
+    loanId: string,
+    lenderId: string,
+    amount: number,
+  ): Promise<boolean> {
     try {
       const loan = this.loans.get(loanId);
-      if (!loan) throw new Error('Loan not found');
-      if (loan.status !== 'approved') throw new Error('Loan not available for funding');
+      if (!loan) throw new Error("Loan not found");
+      if (loan.status !== "approved")
+        throw new Error("Loan not available for funding");
 
       // Update loan status
       loan.lenderId = lenderId;
-      loan.status = 'funded';
+      loan.status = "funded";
       loan.fundedAt = Date.now();
-      loan.dueDate = Date.now() + (loan.term * 30 * 24 * 60 * 60 * 1000);
-      loan.nextPaymentDate = Date.now() + (30 * 24 * 60 * 60 * 1000);
+      loan.dueDate = Date.now() + loan.term * 30 * 24 * 60 * 60 * 1000;
+      loan.nextPaymentDate = Date.now() + 30 * 24 * 60 * 60 * 1000;
 
       // In a real implementation, transfer funds to borrower
       console.log(`Funding loan ${loanId} with ${amount} ${loan.currency}`);
 
       // Update loan status to active
-      loan.status = 'active';
+      loan.status = "active";
 
       return true;
     } catch (error) {
-      console.error('Failed to fund loan:', error);
+      console.error("Failed to fund loan:", error);
       return false;
     }
   }
@@ -190,8 +216,8 @@ class LoanService {
   async makePayment(loanId: string, amount: number): Promise<boolean> {
     try {
       const loan = this.loans.get(loanId);
-      if (!loan) throw new Error('Loan not found');
-      if (loan.status !== 'active') throw new Error('Loan not active');
+      if (!loan) throw new Error("Loan not found");
+      if (loan.status !== "active") throw new Error("Loan not active");
 
       const payment: Payment = {
         id: uuidv4(),
@@ -200,7 +226,7 @@ class LoanService {
         principal: amount * 0.8, // Simplified calculation
         interest: amount * 0.2,
         date: Date.now(),
-        status: 'completed'
+        status: "completed",
       };
 
       loan.repaymentHistory.push(payment);
@@ -209,23 +235,23 @@ class LoanService {
 
       // Update next payment date
       if (loan.remainingPayments > 0) {
-        loan.nextPaymentDate = Date.now() + (30 * 24 * 60 * 60 * 1000);
+        loan.nextPaymentDate = Date.now() + 30 * 24 * 60 * 60 * 1000;
       } else {
         // Loan fully repaid
-        loan.status = 'repaid';
+        loan.status = "repaid";
         loan.nextPaymentDate = undefined;
-        
+
         // Release collateral
         await walletService.releaseCollateral(
           loan.borrowerId,
           loan.collateralAmount,
-          loanId
+          loanId,
         );
       }
 
       return true;
     } catch (error) {
-      console.error('Failed to make payment:', error);
+      console.error("Failed to make payment:", error);
       return false;
     }
   }
@@ -235,40 +261,50 @@ class LoanService {
   }
 
   getBorrowerLoans(borrowerId: string): Loan[] {
-    return Array.from(this.loans.values()).filter(loan => loan.borrowerId === borrowerId);
+    return Array.from(this.loans.values()).filter(
+      (loan) => loan.borrowerId === borrowerId,
+    );
   }
 
   getLenderLoans(lenderId: string): Loan[] {
-    return Array.from(this.loans.values()).filter(loan => loan.lenderId === lenderId);
+    return Array.from(this.loans.values()).filter(
+      (loan) => loan.lenderId === lenderId,
+    );
   }
 
   getAvailableLoans(): Loan[] {
-    return Array.from(this.loans.values()).filter(loan => loan.status === 'approved');
+    return Array.from(this.loans.values()).filter(
+      (loan) => loan.status === "approved",
+    );
   }
 
   async getRecommendedBorrowers(lenderId: string): Promise<Loan[]> {
     try {
       // Get lender preferences (this would come from lender profile)
       const lenderProfile = {
-        riskTolerance: 'medium' as const,
+        riskTolerance: "medium" as const,
         preferredAmount: 50000,
-        preferredTerm: 12
+        preferredTerm: 12,
       };
 
-      const recommendations = await aiService.getLenderRecommendations(lenderProfile);
-      
+      const recommendations =
+        await aiService.getLenderRecommendations(lenderProfile);
+
       // Convert AI recommendations to loan format
-      return recommendations.map(borrower => ({
+      return recommendations.map((borrower) => ({
         id: uuidv4(),
         borrowerId: borrower.userId,
         amount: borrower.requestedAmount,
-        currency: 'USD' as const,
+        currency: "USD" as const,
         collateralAmount: 0,
-        collateralAddress: '',
-        interestRate: this.calculateInterestRate(borrower.aiScore, borrower.riskLevel),
+        collateralAddress: "",
+        interestRate: this.calculateInterestRate(
+          borrower.aiScore,
+          borrower.riskLevel,
+        ),
         term: 12,
-        purpose: 'Business expansion',
-        status: 'approved' as const,
+        purpose: "Business expansion",
+        status: "approved" as const,
         aiScore: borrower.aiScore,
         riskLevel: borrower.riskLevel,
         createdAt: Date.now(),
@@ -276,10 +312,10 @@ class LoanService {
         totalPaid: 0,
         monthlyPayment: 0,
         documents: [],
-        repaymentHistory: []
+        repaymentHistory: [],
       }));
     } catch (error) {
-      console.error('Failed to get recommended borrowers:', error);
+      console.error("Failed to get recommended borrowers:", error);
       return [];
     }
   }
@@ -288,41 +324,41 @@ class LoanService {
   generateMockLoans(userId: string, isLender: boolean = false): Loan[] {
     const mockLoans: Loan[] = [
       {
-        id: 'LN001',
-        borrowerId: isLender ? 'borrower1' : userId,
-        lenderId: isLender ? userId : 'lender1',
+        id: "LN001",
+        borrowerId: isLender ? "borrower1" : userId,
+        lenderId: isLender ? userId : "lender1",
         amount: 25000,
-        currency: 'USD',
+        currency: "USD",
         collateralAmount: 0.6,
-        collateralAddress: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
+        collateralAddress: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
         interestRate: 8.5,
         term: 12,
-        purpose: 'Business expansion',
-        status: 'repaid',
+        purpose: "Business expansion",
+        status: "repaid",
         aiScore: 92,
-        riskLevel: 'low',
+        riskLevel: "low",
         createdAt: Date.now() - 86400000 * 30,
         fundedAt: Date.now() - 86400000 * 29,
         remainingPayments: 0,
         totalPaid: 27125,
         monthlyPayment: 2260,
         documents: [],
-        repaymentHistory: []
+        repaymentHistory: [],
       },
       {
-        id: 'LN002',
-        borrowerId: isLender ? 'borrower2' : userId,
-        lenderId: isLender ? userId : 'lender2',
+        id: "LN002",
+        borrowerId: isLender ? "borrower2" : userId,
+        lenderId: isLender ? userId : "lender2",
         amount: 18000,
-        currency: 'USDT',
+        currency: "USDT",
         collateralAmount: 0.45,
-        collateralAddress: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
+        collateralAddress: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
         interestRate: 7.2,
         term: 18,
-        purpose: 'Equipment purchase',
-        status: 'active',
+        purpose: "Equipment purchase",
+        status: "active",
         aiScore: 88,
-        riskLevel: 'low',
+        riskLevel: "low",
         createdAt: Date.now() - 86400000 * 10,
         fundedAt: Date.now() - 86400000 * 9,
         dueDate: Date.now() + 86400000 * 540,
@@ -331,11 +367,11 @@ class LoanService {
         totalPaid: 3240,
         monthlyPayment: 1080,
         documents: [],
-        repaymentHistory: []
-      }
+        repaymentHistory: [],
+      },
     ];
 
-    mockLoans.forEach(loan => this.loans.set(loan.id, loan));
+    mockLoans.forEach((loan) => this.loans.set(loan.id, loan));
     return mockLoans;
   }
 }

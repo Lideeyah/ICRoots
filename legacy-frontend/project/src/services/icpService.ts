@@ -1,10 +1,12 @@
-import { Actor, HttpAgent } from '@dfinity/agent';
-import { AuthClient } from '@dfinity/auth-client';
-import { Principal } from '@dfinity/principal';
+import { Actor, HttpAgent } from "@dfinity/agent";
+import { AuthClient } from "@dfinity/auth-client";
+import { Principal } from "@dfinity/principal";
 
 // ICP Canister Interface
 export interface ICPCanister {
-  generateBTCWallet: (userId: string) => Promise<{ address: string; publicKey: string }>;
+  generateBTCWallet: (
+    userId: string,
+  ) => Promise<{ address: string; publicKey: string }>;
   getBTCBalance: (address: string) => Promise<number>;
   createLoan: (loanData: any) => Promise<string>;
   updateTrustScore: (userId: string, score: number) => Promise<boolean>;
@@ -18,17 +20,16 @@ class ICPService {
   private agent: HttpAgent | null = null;
   private authClient: AuthClient | null = null;
   private actor: ICPCanister | null = null;
-  private canisterId = import.meta.env.VITE_CANISTER_ID || 'rdmx6-jaaaa-aaaah-qdrqq-cai';
+  private canisterId =
+    import.meta.env.VITE_CANISTER_ID || "rdmx6-jaaaa-aaaah-qdrqq-cai";
 
   async initialize() {
     try {
       this.authClient = await AuthClient.create();
-      
+
       // Create agent
       this.agent = new HttpAgent({
-        host: import.meta.env.PROD 
-          ? 'https://ic0.app' 
-          : '/api/icp'
+        host: import.meta.env.PROD ? "https://ic0.app" : "/api/icp",
       });
 
       // In development, fetch root key
@@ -36,7 +37,7 @@ class ICPService {
         try {
           await this.agent.fetchRootKey();
         } catch (error) {
-          console.warn('Could not fetch root key, using mock mode:', error);
+          console.warn("Could not fetch root key, using mock mode:", error);
           // Continue without root key for development
         }
       }
@@ -48,13 +49,16 @@ class ICPService {
           canisterId: this.canisterId,
         }) as ICPCanister;
       } catch (error) {
-        console.warn('Could not create actor, using mock mode:', error);
+        console.warn("Could not create actor, using mock mode:", error);
         // Continue without actor for development
       }
 
       return true;
     } catch (error) {
-      console.warn('ICP service initialization failed, using mock mode:', error);
+      console.warn(
+        "ICP service initialization failed, using mock mode:",
+        error,
+      );
       return true; // Continue in mock mode
     }
   }
@@ -63,26 +67,44 @@ class ICPService {
     // Candid interface definition for the canister
     return ({ IDL }: any) => {
       return IDL.Service({
-        generateBTCWallet: IDL.Func([IDL.Text], [IDL.Record({ address: IDL.Text, publicKey: IDL.Text })], []),
-        getBTCBalance: IDL.Func([IDL.Text], [IDL.Float64], ['query']),
-        createLoan: IDL.Func([IDL.Record({
-          userId: IDL.Text,
-          amount: IDL.Float64,
-          currency: IDL.Text,
-          collateralAddress: IDL.Text,
-          collateralAmount: IDL.Float64,
-          purpose: IDL.Text,
-          aiScore: IDL.Nat,
-        })], [IDL.Text], []),
+        generateBTCWallet: IDL.Func(
+          [IDL.Text],
+          [IDL.Record({ address: IDL.Text, publicKey: IDL.Text })],
+          [],
+        ),
+        getBTCBalance: IDL.Func([IDL.Text], [IDL.Float64], ["query"]),
+        createLoan: IDL.Func(
+          [
+            IDL.Record({
+              userId: IDL.Text,
+              amount: IDL.Float64,
+              currency: IDL.Text,
+              collateralAddress: IDL.Text,
+              collateralAmount: IDL.Float64,
+              purpose: IDL.Text,
+              aiScore: IDL.Nat,
+            }),
+          ],
+          [IDL.Text],
+          [],
+        ),
         updateTrustScore: IDL.Func([IDL.Text, IDL.Nat], [IDL.Bool], []),
         mintTrustNFT: IDL.Func([IDL.Text, IDL.Text], [IDL.Text], []),
-        getTransactionHistory: IDL.Func([IDL.Text], [IDL.Vec(IDL.Record({
-          id: IDL.Text,
-          type: IDL.Text,
-          amount: IDL.Float64,
-          timestamp: IDL.Int,
-          status: IDL.Text,
-        }))], ['query']),
+        getTransactionHistory: IDL.Func(
+          [IDL.Text],
+          [
+            IDL.Vec(
+              IDL.Record({
+                id: IDL.Text,
+                type: IDL.Text,
+                amount: IDL.Float64,
+                timestamp: IDL.Int,
+                status: IDL.Text,
+              }),
+            ),
+          ],
+          ["query"],
+        ),
         lockCollateral: IDL.Func([IDL.Text, IDL.Float64], [IDL.Bool], []),
         releaseCollateral: IDL.Func([IDL.Text], [IDL.Bool], []),
       });
@@ -91,11 +113,11 @@ class ICPService {
 
   async login() {
     if (!this.authClient) await this.initialize();
-    
+
     return new Promise<boolean>((resolve) => {
       this.authClient?.login({
-        identityProvider: import.meta.env.PROD 
-          ? 'https://identity.ic0.app' 
+        identityProvider: import.meta.env.PROD
+          ? "https://identity.ic0.app"
           : `http://localhost:8000?canisterId=${import.meta.env.VITE_INTERNET_IDENTITY_CANISTER_ID}`,
         onSuccess: () => resolve(true),
         onError: () => resolve(false),
@@ -109,7 +131,7 @@ class ICPService {
 
   async isAuthenticated(): Promise<boolean> {
     if (!this.authClient) await this.initialize();
-    return await this.authClient?.isAuthenticated() || false;
+    return (await this.authClient?.isAuthenticated()) || false;
   }
 
   async generateBTCWallet(userId: string) {
@@ -120,7 +142,7 @@ class ICPService {
       // If still no actor after initialization, return mock data for development
       return {
         address: `bc1q${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`,
-        publicKey: `02${Math.random().toString(16).padStart(64, '0')}`
+        publicKey: `02${Math.random().toString(16).padStart(64, "0")}`,
       };
     }
     return await this.actor.generateBTCWallet(userId);
@@ -133,7 +155,7 @@ class ICPService {
     try {
       return await this.actor.getBTCBalance(address);
     } catch (error) {
-      console.error('Error fetching BTC balance:', error);
+      console.error("Error fetching BTC balance:", error);
       // Return mock data for development
       return Math.random() * 2;
     }
@@ -179,23 +201,23 @@ class ICPService {
     try {
       return await this.actor.getTransactionHistory(address);
     } catch (error) {
-      console.error('Error fetching transaction history:', error);
+      console.error("Error fetching transaction history:", error);
       // Return mock data for development
       return [
         {
-          id: 'tx1',
-          type: 'deposit',
+          id: "tx1",
+          type: "deposit",
           amount: 0.5,
           timestamp: Date.now() - 86400000,
-          status: 'confirmed'
+          status: "confirmed",
         },
         {
-          id: 'tx2',
-          type: 'deposit',
+          id: "tx2",
+          type: "deposit",
           amount: 0.25,
           timestamp: Date.now() - 172800000,
-          status: 'confirmed'
-        }
+          status: "confirmed",
+        },
       ];
     }
   }
