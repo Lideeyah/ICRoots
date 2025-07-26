@@ -102,25 +102,21 @@ fn get_loan(id: u64) -> Option<Loan> {
 fn pre_upgrade() {
     let vec = LOANS.with(|l| l.borrow().clone());
     let bytes = candid::encode_one(vec).unwrap();
-    // write at offset 0
-    stable::stable64_write(0, &bytes);
+    stable64_write(0, &bytes);                 // offset must be first arg
 }
 
 #[ic_cdk::post_upgrade]
 fn post_upgrade() {
-    use ic_cdk::api::stable::{stable64_read, stable64_size};
-
-    let byte_len = stable64_size() * 8;           // words → bytes
-    if byte_len == 0 {
+    let page_bytes = 65_536u64;               // 64 KiB per Wasm page
+    let total_bytes = stable64_size() * page_bytes;
+    if total_bytes == 0 {
         return;
     }
-    let mut bytes = vec![0u8; byte_len as usize];
-    stable64_read(0, &mut bytes);
-
-    let vec: Vec<Loan> = candid::decode_one(&bytes).unwrap();
+    let mut buf = vec![0u8; total_bytes as usize];
+    stable64_read(0, &mut buf);
+    let vec: Vec<Loan> = candid::decode_one(&buf).unwrap();
     LOANS.with(|l| *l.borrow_mut() = vec);
-    let next = LOANS.with(|l| l.borrow().len() as u64);
-    NEXT_ID.with(|n| *n.borrow_mut() = next);
+    NEXT_ID.with(|n| *n.borrow_mut() = LOANS.with(|l| l.borrow().len() as u64));
 }
 
 /* ---------- TEMP PING ---------- */
