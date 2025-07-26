@@ -1,131 +1,140 @@
-# ICRoots 🌳🔗
 
-> **Bitcoin lending, rooted in trust.**  
-> Collateralize BTC, borrow stablecoins, earn reputation-NFTs – all fully on-chain on the Internet Computer.
+# ICRoots 🌳🔗  
+*Bitcoin lending, rooted in trust.*
 
----
-
-## 1. Why ICRoots?
-
-Millions of Bitcoin holders sit on locked value but lack fast, non-custodial access to liquidity.  
-Traditional “crypto loans” are either centralized or ignore borrower reputation.  
-**ICRoots** blends three super-powers:
-
-1. **BTC-backed loans** – keep your coins, unlock short-term cash.
-2. **Soul-bound NFT reputation** – gamified trust that grows with every repayment.
-3. **AI Copilot** – on-chain risk scoring & loan matchmaking.
+Collateralize BTC, borrow stablecoins, earn reputation-NFTs – all **on-chain** on the Internet Computer (ICP).
 
 ---
 
-## 2. System Architecture (micro-canisters)
+## 1  Why ICRoots?
 
-| Concern                         | Canister          | Why isolate it?                                    |
-| ------------------------------- | ----------------- | -------------------------------------------------- |
-| Loan ledger & core state        | `loans`           | Small, auditable upgrades.                         |
-| BTC custody & liquidation logic | `collateral`      | Tight security boundary; almost never upgraded.    |
-| Reputation NFTs                 | `repute` _(TBD)_  | Separate lifecycle for mint/burn permissions.      |
-| AI scoring engine               | `trust_ai`_(TBD)_ | WASM heavy; can be swapped for newer models later. |
-| UX events / logs                | `event_bus`       | Keeps business logic clean; tiny footprint.        |
+Millions of BTC holders sit on locked value but lack fast, non-custodial liquidity.  
+ICRoots fixes that with three super-powers:
 
-📄 See **docs/micro-canister-architecture.png** for a visual and **docs/data-flow-sequence.png** for the happy-path sequence diagram.
+1. **BTC-backed loans** – keep your coins, unlock short-term cash.  
+2. **Soul-bound NFT reputation** – trust level grows (or shrinks) with every repayment.  
+3. **AI copilot** – on-chain risk scoring and loan matchmaking.
 
 ---
 
-## 3. Tech Stack
+## 2  Service Anatomy
 
-| Layer       | Choice                                          |
-| ----------- | ----------------------------------------------- |
-| Frontend    | React + Vite + TailwindCSS                      |
-| Blockchain  | Internet Computer (ICP) Canisters (Rust/Motoko) |
-| Wallet/Auth | Plug Wallet • Internet Identity                 |
-| AI Layer    | OpenAI / Caffeine AI                            |
-| NFTs        | Soul-bound DIP-721                              |
-| Dev tooling | `dfx`, Vitest, Husky pre-commit hooks           |
-
----
-
-## 4. Folder Map (top level)
-
-icroots/
-├─ canisters/ # each micro-canister lives here
-│ ├─ loans/
-│ ├─ collateral/
-│ ├─ repute/
-│ ├─ trust_ai/
-│ └─ event_bus/
-├─ src/frontend/ # React app
-├─ docs/ # diagrams & pitch assets
-├─ tests/ # integration tests (ic-cdk-testing)
-├─ scripts/ # helper bash/ts scripts
-├─ dfx.json # ICP workspace definition
-└─ README.md # you are here
+| Concern                           | Canister (crate) | Rationale for isolation                         | Status |
+| --------------------------------- | ---------------- | ----------------------------------------------- | ------ |
+| Loan ledger & core state          | **`loans_backend`** | Small, auditable upgrades                      | **LIVE (local)** |
+| BTC custody & liquidation logic   | `collateral_backend` | Security boundary, rarely upgraded             | scaffold |
+| Reputation NFTs (soul-bound)      | `repute_backend` | Separate mint/burn lifecycle                   | scaffold |
+| AI scoring engine                 | `trust_ai_backend` | Heavy WASM, pluggable ML models                | scaffold |
+| UX events / logs                  | `event_bus_backend` | Keep business logic clean                      | scaffold |
 
 ---
 
-## 5. Quick Start (local)
+## 3  Tech Stack
 
-1. *Pre-requisites*
+| Layer        | Choice                                          |
+| ------------ | ----------------------------------------------- |
+| Front-end    | React + Vite + TailwindCSS                      |
+| Smart-contracts | ICP canisters (Rust for prod, Motoko for rapid POCs) |
+| Wallet/Auth  | Plug Wallet · Internet Identity                 |
+| AI Layer     | OpenAI / Caffeine AI on-chain via `trust_ai`    |
+| NFTs         | Soul-bound DIP-721                              |
+| Dev tooling  | `dfx`, `cargo`, `didc 0.4`, Husky, Vitest       |
 
-   ```
-   node ≥18   dfx ≥0.20   git ≥2.40
-   ```
+---
+
+## 4  Repo Map
+
+```
+
+ICRoots/
+├─ src/backend/canisters/
+│  ├─ loans/        # Rust crate → loans\_backend.wasm
+│  ├─ collateral/
+│  ├─ repute/
+│  ├─ trust\_ai/
+│  └─ event\_bus/
+├─ src/frontend/    # React app
+├─ docs/            # diagrams & pitch decks
+├─ tests/           # unit + ICP integration
+├─ scripts/         # helper bash scripts
+├─ dfx.json         # workspace definition (custom canisters)
+└─ README.md        # (you are here)
 
 ````
 
-2. Clone & prepare
+---
 
-   git clone https://github.com/ICRoots/ICRoots.git
-   cd ICRoots
-   cp .env.sample .env         # adjust NETWORK / cycles wallet if needed
-   npm install               # installs both root and workspace deps
+## 5  Local Dev-Loop
 
+```
+1 — Prereqs
+node >=18   dfx >=0.27   cargo >=1.77
+
+# 2 — Clone & install deps
+git clone https://github.com/ICRoots/ICRoots.git
+cd ICRoots
+cp .env.sample .env        # adjust NETWORK / wallet if needed
+npm install                # installs front-end + husky hooks
+
+# 3 — Run ICP locally + front-end
+dfx start --background
+dfx deploy                 # builds + installs all canisters
+npm run dev                # http://localhost:5173
 ````
 
-3. *Run ICP locally + frontend*
+### Running back-end tests
 
-   ```
-   dfx start --background
-   dfx deploy
-   npm run dev                 # launches Vite on http://localhost:5173
-   ```
+```bash
+cargo test --manifest-path src/backend/canisters/loans/Cargo.toml
+```
+
+### Regenerating the Candid file (didc 0.4)
+
+```bash
+cargo build --manifest-path src/backend/canisters/loans/Cargo.toml \
+            --release --target wasm32-unknown-unknown
+
+didc bind --target did \
+  target/wasm32-unknown-unknown/release/loans_backend.wasm \
+  > src/backend/canisters/loans/loans_backend.did
+```
 
 ---
 
-## 6. Deploy to ICP Mainnet
+## 6  Deploying to Main-net (coming soon)
 
-```
-dfx deploy --network ic
-# copy the printed canister IDs into README & DoraHacks submission
+```bash
+# production identity
+dfx identity use prod-owner
+# build + install
+dfx build loans_backend --network ic
+dfx deploy loans_backend --network ic --yes
 ```
 
-Make sure you have enough cycles in your default wallet (`dfx ledger --network ic balance`).
+| Component      | Canister ID (main-net) | Gateway URL | Notes                            |
+| -------------- | ---------------------- | ----------- | -------------------------------- |
+| loans\_backend | *(pending)*            | *(pending)* | will be added after cycle top-up |
 
 ---
 
-## 7. Roadmap (post-qualification)
+## 7  Post-Qualification Roadmap
 
-* 🔄 Integrate real BTC test-net custody via Chain-Fusion.
-* 🏷️ Launch soul-bound NFT minting in `repute` canister.
-* 🤖 Fine-tune `trust_ai` risk model on-chain.
-* 📱 Mobile PWA wrapper for emerging-market users.
-
----
-
-## 8. Contributing
-
-PRs welcome – follow our **Git flow**:
-
-```
-feat/✏️      → new features
-fix/🐛        → patches
-docs/📚       → README / diagrams
-```
-
-Run `npm run lint && npm test` before pushing.
+* 🔄 Wire `loans_backend` to real ckBTC custody via **Chain Fusion**.
+* 🏷️ Launch `repute_backend` soul-bound NFT minting.
+* 🤖 Deploy first ML model in `trust_ai_backend`.
+* 📱 Ship PWA wrapper for emerging-market users.
 
 ---
 
-## 9. License
+## 8  Contributing
+
+* **Branches** — `feat/✏️`, `fix/🐛`, `docs/📚`.
+* Run `npm run lint && npm test` before pushing.
+* PRs & issue discussions welcome!
+
+---
+
+## 9  License
 
 MIT © 2025 ICRoots team.
 
@@ -133,4 +142,14 @@ MIT © 2025 ICRoots team.
 
 *Let’s build a fairer, faster Bitcoin credit market – together.* 🚀
 
+````
+
+---
+
+### Git commands
+
+```bash
+git add README.md
+git commit -m "docs: refresh README with loans_backend progress & dev guide"
+git push
 ````
