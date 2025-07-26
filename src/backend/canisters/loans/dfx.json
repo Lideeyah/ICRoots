@@ -1,6 +1,7 @@
 {
   "canisters": {
     "icroots_loans_backend": {
+      "candid": "src/icroots_loans_backend/icroots_loans_backend.did",
       "package": "icroots_loans_backend",
       "type": "rust"
     },
